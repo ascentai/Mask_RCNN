@@ -22,8 +22,6 @@ class CityscapesDataset(utils.Dataset):
         images_folder should be an absolute path
         """
         
-        assert images_folder[0] == '/'
-        assert annotation_folder[0] == '/'
         
         # Add classes
         #self.class_city = {'person':24,'rider':25,'car':26, 'truck':27, 'bus':28, 'train':31, 'motorcycle':32, 'bicycle':33, 'caravan':29, 'trailer':30, 'road':7, 'sidewalk':8, 'parking':9,'pole':17, 'traffic light':19, 'traffic sign':20 }
@@ -36,7 +34,6 @@ class CityscapesDataset(utils.Dataset):
 
         # main loop
         list_cities = glob.glob(annotation_folder+'/*')
-        list_cities = list_cities[0:1] # TODO: REMOVE!!!!!!!!!!!!!!!!!!!!!!!!!
         for c in list_cities:
             city_name = c.split('/')[-1]
             print(city_name)
