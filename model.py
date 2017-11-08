@@ -1122,6 +1122,29 @@ def load_image_gt(dataset, config, image_id, augment=False,
         padding=config.IMAGE_PADDING)
     mask = utils.resize_mask(mask, scale, padding)
 
+    # detect empty masks (corrupted)
+    _, _, num_masks = mask.shape
+    corrupted_masks_indexes = []
+    for i in range(num_masks):
+        if np.max(mask[:,:,i])==0:
+            #print("The %dth mask after resizing is corrupted"%(i))
+            corrupted_masks_indexes.append(i)
+
+    # Remove the corrupted masks and associated classes.
+    new_shape = list(mask.shape[0:2])
+    new_shape.append(num_masks-len(corrupted_masks_indexes))
+    temp_masks = np.zeros(new_shape, dtype=np.uint8)
+    temp_class_ids = np.zeros(new_shape[-1], dtype=np.int32)
+    j=0
+    for i in range(num_masks):
+        if i not in corrupted_masks_indexes:
+            temp_masks[:,:,j] = mask[:,:,i]
+            temp_class_ids[j] = class_ids[i]
+            j+=1
+    mask = temp_masks
+    class_ids = temp_class_ids
+
+
     # Random horizontal flips.
     if augment:
         if random.randint(0, 1):
