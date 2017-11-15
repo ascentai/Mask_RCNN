@@ -16,19 +16,34 @@ import visualize
 from model import log
 import argparse
 
+# example of execution
+#python -i cityscapes_training.py --training_path_annot cityscapes/train_annot --training_path_images cityscapes/train_img --validation_path_annot cityscapes/val_annot --validation_path_images cityscapes/val_img
+
 PARSER = argparse.ArgumentParser()
 
 PARSER.add_argument(
-	"--training_path",
+	"--training_path_annot",
 	type=str,
 	required=True,
 	help="where to find the cities folders with the annotation for training.")
 
 PARSER.add_argument(
-	"--validation_path",
+	"--training_path_images",
+	type=str,
+	required=True,
+	help="where to find the cities folders with the images for training.")
+
+PARSER.add_argument(
+	"--validation_path_annot",
 	type=str,
 	required=True,
 	help="where to find the cities folders with the annotation for validation.")
+
+PARSER.add_argument(
+	"--validation_path_images",
+	type=str,
+	required=True,
+	help="where to find the cities folders with the images for validation.")
 
 ARGS = vars(PARSER.parse_args())
 
@@ -47,11 +62,13 @@ COCO_MODEL_PATH = os.path.join(ROOT_DIR, "mask_rcnn_coco.h5")
 
 # Training dataset
 dataset_train = CityscapesDataset()
-dataset_train.create_dataset(ARGS['training_path'], ARGS['validation_path'])
+dataset_train.create_dataset(ARGS['training_path_annot'], ARGS['training_path_images'])
 dataset_train.prepare()
 
 # Validation dataset
-dataset_val = dataset_train # for now
+dataset_val = CityscapesDataset()
+dataset_val.create_dataset(ARGS['validation_path_annot'], ARGS['validation_path_images'])
+dataset_val.prepare()
 
 class CityscapesConfig(Config):
     """Configuration for training on the Cityscapes dataset.
