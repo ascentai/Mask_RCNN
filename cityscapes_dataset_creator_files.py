@@ -208,8 +208,8 @@ class CityscapesDataset(utils.Dataset):
             self.add_class("cityscapes", i+1, k)
 
         # main loop
-        #list_cities = glob.glob(annotation_folder+'/*')
-        list_cities = [os.path.join(annotation_folder,city) for city in ['monchengladbach']] # TODO this has to be substituted by previous line
+        list_cities = glob.glob(annotation_folder+'/*')
+        #list_cities = [os.path.join(annotation_folder,city) for city in ['monchengladbach']] # TODO this has to be substituted by previous line
         for c in list_cities:
             city_name = c.split('/')[-1]
             print(city_name)
@@ -261,32 +261,13 @@ class CityscapesDataset(utils.Dataset):
                 mask[indexes,0] = 1
                 masks.append(mask)
 
-        masks = np.concatenate(masks, 2)
-        classes_ids = np.array([self.class_names.index(label) for label in labels])
-        return masks, classes_ids.astype(np.int32)
-                
-        # Show instance image
-        ins_image = np.zeros([height,width,3],dtype=np.uint8)
-        class_image = np.zeros([height,width,3],dtype=np.uint8)
-        colors = []
-        for a in annot:
-            # new color for object
-            color = [np.random.randint(256) for _ in range(3)]
-            while color in colors:
-                color = [np.random.randint(256) for _ in range(3)]
-            colors.append(color)
-
-            # obtain mask
-            mask_obj = np.ones([height,width])
-            for j in range(3):
-                mask_obj *= (ids_image[:,:,j] == a['color'][j])
-
-            # fill in the channels for the instance and the classes images
-            for j in range(3):
-                ins_channel = ins_image[:,:,j]
-                ins_channel[mask_obj==1] = color[j]
-                class_channel = class_image[:,:,j]
-                class_channel[mask_obj==1] = class2color[a['label']][j]
+        if len(masks) == 0:
+            print("empty mask on image",image_id)
+            return None, None
+        else:
+            masks = np.concatenate(masks, 2)
+            classes_ids = np.array([self.class_names.index(label) for label in labels])
+            return masks, classes_ids.astype(np.int32)
         
     
     

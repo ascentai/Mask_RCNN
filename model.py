@@ -1111,6 +1111,14 @@ def load_image_gt(dataset, config, image_id, augment=False,
         of the image unless use_mini_mask is True, in which case they are
         defined in MINI_MASK_SHAPE.
     """
+
+    # Active classes
+    # Different datasets have different classes, so track the
+    # classes supported in the dataset of this image.
+    active_class_ids = np.zeros([dataset.num_classes], dtype=np.int32)
+    class_ids = dataset.source_class_ids[dataset.image_info[image_id]["source"]]
+    active_class_ids[class_ids] = 1
+    
     # Load image and mask
     image = dataset.load_image(image_id)
     mask, class_ids = dataset.load_mask(image_id)
@@ -1120,8 +1128,24 @@ def load_image_gt(dataset, config, image_id, augment=False,
         min_dim=config.IMAGE_MIN_DIM, 
         max_dim=config.IMAGE_MAX_DIM,
         padding=config.IMAGE_PADDING)
-    mask = utils.resize_mask(mask, scale, padding)
+    
 
+    # Image meta data
+    image_meta = compose_image_meta(image_id, shape, window, active_class_ids)
+
+    # if class_ids is None, return an empty mask and 
+    if type(class_ids) != np.ndarray:
+        bbox = np.zeros([1,5])# bbox=[0,0,0,0], class=0 (background)
+        if use_mini_mask:
+            mask = np.zeros([config.MINI_MASK_SHAPE[0], config.MINI_MASK_SHAPE[1],1], dtype=np.uint8)
+        else:
+            mask = np.zeros([shape[0], shape[1], 1], dtype=np.uint8)
+        
+        return image, image_meta, bbox, mask
+        
+    # resize the mask
+    mask = utils.resize_mask(mask, scale, padding)
+    
     # detect empty masks (corrupted)
     _, _, num_masks = mask.shape
     corrupted_masks_indexes = []
@@ -1159,19 +1183,13 @@ def load_image_gt(dataset, config, image_id, augment=False,
     # Add class_id as the last value in bbox
     bbox = np.hstack([bbox, class_ids[:, np.newaxis]])
 
-    # Active classes
-    # Different datasets have different classes, so track the
-    # classes supported in the dataset of this image.
-    active_class_ids = np.zeros([dataset.num_classes], dtype=np.int32)
-    class_ids = dataset.source_class_ids[dataset.image_info[image_id]["source"]]
-    active_class_ids[class_ids] = 1
+    
 
     # Resize masks to smaller size to reduce memory usage
     if use_mini_mask:
         mask = utils.minimize_mask(bbox, mask, config.MINI_MASK_SHAPE)
 
-    # Image meta data
-    image_meta = compose_image_meta(image_id, shape, window, active_class_ids)
+    
 
     return image, image_meta, bbox, mask
 
