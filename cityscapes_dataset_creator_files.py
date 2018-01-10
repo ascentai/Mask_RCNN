@@ -202,6 +202,7 @@ def get_instances_from_file(filename, class_ids):
 class CityscapesDataset(utils.Dataset):
     def create_dataset(self, annotation_folder, images_folder):
         self.class_city = {'person':24,'rider':25,'car':26, 'truck':27, 'bus':28, 'train':31, 'motorcycle':32, 'bicycle':33, 'caravan':29, 'trailer':30 }
+        #self.class_city = {'person':24,'rider':25,'car':26, 'truck':27, 'bus':28, 'train':31, 'motorcycle':32, 'bicycle':33, 'caravan':29, 'trailer':30,'road':7,'sidewalk':8,'parking':9,'rail track':10,'building':11,'guard rail':14,'pole':17,'traffic light':19,'traffic sign':20,'vegetation':21,'sky':23 }
         self.my_class_ids = {}
         for i, k in enumerate(self.class_city):
             self.my_class_ids[k] = i+1
