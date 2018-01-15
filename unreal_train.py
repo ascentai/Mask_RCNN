@@ -20,7 +20,7 @@ if __name__=='__main__':
     parser.add_argument('-i2', help='images path (validation)', dest='valid_images_path', type=str, default=IMAGES_PATH2)
     parser.add_argument('-k',  help='initial weight type',      dest='init_with',         type=str, default='coco')
     parser.add_argument('-w',  help='weight path',              dest='model_weight_path', type=str, default='unreal_model_weights.h5')
-    parser.add_argument('-e',  help='training epochs',          dest='epochs',            type=int, default='20')
+    parser.add_argument('-e',  help='training epochs',          dest='epochs',            type=int, default='10')
     parser.add_argument('-e2', help='fine tune epochs',         dest='epochs2',           type=int, default='2')
 
     args = parser.parse_args() 
