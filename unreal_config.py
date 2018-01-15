@@ -39,3 +39,7 @@ class UnrealConfig(Config):
     # use small validation steps since the epoch is small
     VALIDATION_STPES = 5
 
+    # Anchor stride
+    # If 1 then anchors are created for each cell in the backbone feature map.
+    # If 2, then anchors are created for every other cell, and so on.
+    RPN_ANCHOR_STRIDE = 1
