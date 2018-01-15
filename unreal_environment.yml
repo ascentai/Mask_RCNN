@@ -1,0 +1,18 @@
+name: mrcnn_unreal
+channels:
+- anaconda
+- conda-forge
+- defaults
+dependencies:
+- h5py=2.7.1=py35h8d53cdc_0
+- jupyter=1.0.0=py35hd38625c_0
+- keras-gpu=2.0.8=py35ha2fb4ba_0
+- matplotlib=2.1.1=py35ha26af80_0
+- numpy=1.14.0=py35h3dfced4_0
+- opencv=3.3.1=py35h6cbbc71_1
+- pillow=5.0.0=py35h3deb7b8_0
+- pip=9.0.1=py35h7e7da9d_4
+- python=3.5.4=h417fded_24
+- scikit-image=0.13.1=py35h14c3975_1
+- scipy=1.0.0=py35hcbbe4a2_0
+- tensorflow-gpu=1.3.0=0
