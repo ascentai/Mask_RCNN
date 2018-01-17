@@ -12,6 +12,7 @@ dependencies:
 - opencv=3.3.1=py35h6cbbc71_1
 - pillow=5.0.0=py35h3deb7b8_0
 - pip=9.0.1=py35h7e7da9d_4
+- tqdm=4.19.4=py35h68e51d2_0
 - python=3.5.4=h417fded_24
 - scikit-image=0.13.1=py35h14c3975_1
 - scipy=1.0.0=py35hcbbe4a2_0
