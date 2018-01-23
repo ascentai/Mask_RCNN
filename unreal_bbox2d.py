@@ -43,7 +43,7 @@ if __name__=='__main__':
     model = modellib.MaskRCNN(mode="inference", model_dir=MODEL_DIR, config=config)
     model.load_weights(args.model_weight_path, by_name=True)
 
-    class_names = ['BG', 'people', 'car'] # names used by 3D-Deepbox
+    class_names = ['BG', 'person', 'car'] # names used by 3D-Deepbox
     for image_id in sorted(dataset.image_ids):
         # Load image and ground truth data
         result = modellib.load_image_gt(dataset, config, image_id, use_mini_mask=False)
