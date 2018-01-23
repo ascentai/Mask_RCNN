@@ -8,10 +8,10 @@ from pathlib import Path
 
 if __name__=='__main__':
     HOME_DIR = str(Path.home())
-    OBJECT_PATH1 = '{}/datasets/unreal/unreal dataset 1/objects_description.json'.format(HOME_DIR)
-    IMAGES_PATH1 = '{}/datasets/unreal/unreal dataset 1/images'.format(HOME_DIR)
-    OBJECT_PATH2 = '{}/datasets/unreal/unreal dataset 2/objects_description.json'.format(HOME_DIR)
-    IMAGES_PATH2 = '{}/datasets/unreal/unreal dataset 2/images'.format(HOME_DIR)
+    OBJECT_PATH1 = '{}/datasets/unreal/unreal dataset 2/objects_description.json'.format(HOME_DIR)
+    IMAGES_PATH1 = '{}/datasets/unreal/unreal dataset 2/images'.format(HOME_DIR)
+    OBJECT_PATH2 = '{}/datasets/unreal/unreal dataset 1/objects_description.json'.format(HOME_DIR)
+    IMAGES_PATH2 = '{}/datasets/unreal/unreal dataset 1/images'.format(HOME_DIR)
 
     parser = argparse.ArgumentParser(description='Unreal Mask RCNN Train')
     parser.add_argument('-o',  help='object path',              dest='train_object_path', type=str, default=OBJECT_PATH1)
