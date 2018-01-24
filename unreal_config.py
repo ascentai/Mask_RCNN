@@ -1,3 +1,6 @@
+"""
+Train config for Unreal synthetic images
+"""
 from config import Config
 
 
@@ -9,6 +12,7 @@ class UnrealConfig(Config):
     # Give the configuration a recognizable name
     NAME = "Unreal"
 
+    # Class names
     CLASS_NAMES = ['Pedestrian', 'Vehicles']
     NUM_CLASSES = 1 + len(CLASS_NAMES) # background + normal classses
     CLASS_NAME_TO_ID = {class_name:str(i+1) for i, class_name in enumerate(CLASS_NAMES)}
@@ -43,3 +47,10 @@ class UnrealConfig(Config):
     # If 1 then anchors are created for each cell in the backbone feature map.
     # If 2, then anchors are created for every other cell, and so on.
     RPN_ANCHOR_STRIDE = 1
+
+
+class InferenceConfig(UnrealConfig):
+    """ config for testing / prediciton / inference
+    """
+    GPU_COUNT = 1
+    IMAGES_PER_GPU = 1

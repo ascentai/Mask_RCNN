@@ -1,36 +1,19 @@
+"""
+Compute mean AP (mAP) to evaluate the performance of object detection
+"""
 import os, argparse
 import model as modellib # Mask RCNN
-from unreal_config  import UnrealConfig
+from unreal_config  import UnrealConfig, InferenceConfig
 from unreal_dataset import UnrealDataset
 from unreal_utils   import MODEL_DIR, limit_GPU_usage, compute_mean_AP
 from pathlib import Path
 
 
-class InferenceConfig(UnrealConfig):
-    """ config for testing / prediciton / inference
-    """
-    GPU_COUNT = 1
-    IMAGES_PER_GPU = 1
-
-
-if __name__=='__main__':
-    HOME_DIR = str(Path.home())
-    #TODO test set should be different from the validation set
-    OBJECT_DESC_PATH = '{}/datasets/unreal/unreal dataset 2/objects_description.json'.format(HOME_DIR)
-    IMAGES_PATH      = '{}/datasets/unreal/unreal dataset 2/images'.format(HOME_DIR)
-
-    parser = argparse.ArgumentParser(description='Unreal Mask RCNN Train')
-    parser.add_argument('-o', help='object path', dest='test_object_path',  type=str, default=OBJECT_DESC_PATH)
-    parser.add_argument('-i', help='images path', dest='test_images_path',  type=str, default=IMAGES_PATH)
-    parser.add_argument('-w', help='weight path', dest='model_weight_path', type=str, default='unreal_model_weights.h5')
-    parser.add_argument('-n', help='image count', dest='image_count',       type=int, default=10)
-
-    args = parser.parse_args() 
-
-    # Test dataset
-    dataset_test = UnrealDataset()
-    dataset_test.populate(args.test_object_path, args.test_images_path)
-    dataset_test.prepare()
+def evaluate_mAP(source_image_dir, object_desc_path, model_weight_path, image_count):
+    # load dataset
+    dataset = UnrealDataset()
+    dataset.populate(source_image_dir, object_desc_path)
+    dataset.prepare()
 
     # limit GPU usage (don't use it all!)
     limit_GPU_usage()
@@ -40,9 +23,25 @@ if __name__=='__main__':
     config.display()
 
     model = modellib.MaskRCNN(mode="inference", model_dir=MODEL_DIR, config=config)
-    model.load_weights(args.model_weight_path, by_name=True)
+    model.load_weights(model_weight_path, by_name=True)
 
     # calculate the mean average precision
-    mean_AP = compute_mean_AP(model, config, dataset_test, args.image_count)
+    mean_AP = compute_mean_AP(model, config, dataset, image_count)
     print('Mean AP:', mean_AP)
+
+if __name__=='__main__':
+    HOME_DIR = str(Path.home())
+    #TODO test set should be different from the validation set
+    SOURCE_IMAGE_DIR = '{}/datasets/unreal/unreal dataset 1/images'.format(HOME_DIR)
+    OBJECT_DESC_PATH = '{}/datasets/unreal/unreal dataset 1/objects_description.json'.format(HOME_DIR)
+
+    parser = argparse.ArgumentParser(description='Unreal Mask RCNN Train')
+    parser.add_argument('-s', help='source image dir',  dest='source_image_dir',  type=str, default=SOURCE_IMAGE_DIR)
+    parser.add_argument('-o', help='object desc path',  dest='object_desc_path',  type=str, default=OBJECT_DESC_PATH)
+    parser.add_argument('-w', help='model weight path', dest='model_weight_path', type=str, default='unreal_model_weights.h5')
+    parser.add_argument('-n', help='image count',       dest='image_count',       type=int, default=10)
+    args = parser.parse_args()
+    print(args)
+
+    evaluate_mAP(args.source_image_dir, args.object_desc_path, args.model_weight_path, args.image_count)
 

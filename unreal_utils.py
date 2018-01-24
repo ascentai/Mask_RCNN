@@ -1,3 +1,6 @@
+"""
+Commonly used utility functions
+"""
 import os
 import tensorflow as tf
 import numpy as np
@@ -6,6 +9,7 @@ import model as modellib # Mask RCNN
 import utils
 
 
+# constatns
 ROOT_DIR = os.getcwd()
 MODEL_DIR = os.path.join(ROOT_DIR, "logs")
 COCO_MODEL_PATH = os.path.join(ROOT_DIR, "mask_rcnn_coco.h5")

@@ -1,3 +1,6 @@
+"""
+Dataset class used by Mask R-CNN model for UNREAL synthetic images
+"""
 import os, glob, json, imageio
 import numpy as np
 import utils # Mask RCNN
@@ -8,7 +11,7 @@ class UnrealDataset(utils.Dataset):
     """ This represents the images (the original and the instance segmentation) used by Mask R-CNN
     """
 
-    def populate(self, object_descriptions_path, images_path):
+    def populate(self, images_path, object_descriptions_path):
         """ This method must be called after the initializaiton and before the prepare method
         """
         self.add_classes()
