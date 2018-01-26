@@ -57,8 +57,8 @@ def train_model(
 if __name__=='__main__':
     # constants
     HOME_DIR = str(Path.home())
-    TRAIN_SOURCE_IMAGE_DIR = '{}/datasets/unreal/unreal dataset 2/images'.format(HOME_DIR)
-    TRAIN_OBJECT_DESC_PATH = '{}/datasets/unreal/unreal dataset 2/objects_description.json'.format(HOME_DIR)
+    TRAIN_SOURCE_IMAGE_DIR = '{}/datasets/unreal/unreal dataset 3/images'.format(HOME_DIR)
+    TRAIN_OBJECT_DESC_PATH = '{}/datasets/unreal/unreal dataset 3/objects_description.json'.format(HOME_DIR)
     VALID_SOURCE_IMAGE_DIR = '{}/datasets/unreal/unreal dataset 1/images'.format(HOME_DIR)
     VALID_OBJECT_DESC_PATH = '{}/datasets/unreal/unreal dataset 1/objects_description.json'.format(HOME_DIR)
 
