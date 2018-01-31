@@ -17,6 +17,7 @@ import scipy.misc
 import skimage.color
 import skimage.io
 
+import scipy.ndimage
 
 ############################################################
 #  Bounding Boxes
@@ -470,6 +471,7 @@ def unmold_mask(mask, bbox, image_shape):
     """
     threshold = 0.5
     y1, x1, y2, x2 = bbox
+    #print("bbox:",x1,x2,y1,y2)
     mask = scipy.misc.imresize(
         mask, (y2 - y1, x2 - x1), interp='bilinear').astype(np.float32) / 255.0
     mask = np.where(mask >= threshold, 1, 0).astype(np.uint8)
