@@ -1,9 +1,17 @@
 import imageio
+import argparse
+
+PARSER = argparse.ArgumentParser("test a model in a real set of images")
+PARSER.add_argument("--images_folder", type=str, required=True, help="where to find the test images (must include the final '/' in the path)")
+PARSER.add_argument("--model", type=str, required=True, help="model that contains the trained weights")
+PARSER.add_argument("--output_folder",type=str, default="./results/",help="where the result images will be placed")
+
+args = PARSER.parse_args()
 
 # images
 import glob
-images_names =  glob.glob('/home/viral/Documents/Kawasaki/test/*.jpg')
-images_names += glob.glob('/home/viral/Documents/Kawasaki/test/*.png')
+images_names =  glob.glob(args.images_folder+'*.jpg')
+images_names += glob.glob(args.images_folder+'*.png')
 
 # config
 from elecparts_config import elecpartsConfig
@@ -18,7 +26,7 @@ config = InferenceConfig()
 import model as modellib
 from unreal_utils   import MODEL_DIR, limit_GPU_usage, compute_mean_AP
 model = modellib.MaskRCNN(mode="inference", model_dir=MODEL_DIR, config=config)
-model.load_weights("elecparts_model_weights.h5", by_name=True)
+model.load_weights(args.model, by_name=True)
 
 
 
@@ -63,6 +71,6 @@ for path in images_names:
     r = results[0]
     visualize.display_instances(img, r['rois'], r['masks'], r['class_ids'], dataset.my_class_names, r['scores'], ax=get_ax())
     image_name = path.split('/')[-1]
-    result_image_result = 'results/'+image_name
+    result_image_result = args.output_folder+image_name
     plt.savefig(result_image_result)
     plt.show()
