@@ -23,7 +23,7 @@ def generate_bbox2d(source_image_dir, model_weight_path, instance_dir):
     model.load_weights(model_weight_path, by_name=True)
 
     class_names = ['BG', 'person', 'car'] # names used by 3D-Deepbox
-    for image_path in glob.glob(os.path.join(source_image_dir, 'lit*.png')):
+    for image_path in sorted(glob.glob(os.path.join(source_image_dir, 'lit*.png'))):
         # load the image
         image = imageio.imread(image_path)
         image = image[:, :, :3]
@@ -46,17 +46,17 @@ if __name__=='__main__':
     # constants
     HOME_DIR = str(Path.home())
     SOURCE_IMAGE_PATH = '{}/datasets/unreal/unreal dataset 1/images'.format(HOME_DIR)
-    INSTANCE_DIR      = '{}/datasets/gtc2018/unreal/unreal dataset 1/instances'.format(HOME_DIR)
+    TARGET_DATA_DIR   = '{}/datasets/gtc2018/unreal/unreal dataset 1/instances'.format(HOME_DIR)
 
     # command line parameters
     parser = argparse.ArgumentParser(description='Unreal Mask RCNN Train')
     parser.add_argument('-s', help='source image dir', dest='source_image_dir',  type=str, default=SOURCE_IMAGE_PATH)
-    parser.add_argument('-i', help='instance dir',     dest='instance_dir',      type=str, default=INSTANCE_DIR)
+    parser.add_argument('-t', help='target data dir',  dest='target_data_dir',   type=str, default=TARGET_DATA_DIR)
     parser.add_argument('-w', help='weight path',      dest='model_weight_path', type=str, default='unreal_model_weights.h5')
     args = parser.parse_args()
     print(args)
 
     # generate the 2d bounding box data
-    generate_bbox2d(args.source_image_dir, args.model_weight_path, args.instance_dir)
+    generate_bbox2d(args.source_image_dir, args.model_weight_path, args.target_data_dir)
 
 
