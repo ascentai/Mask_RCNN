@@ -9,7 +9,8 @@ class elecpartsConfig(Config):
     # Give the configuration a recognizable name
     NAME = "elecparts"
 
-    CLASS_NAMES = ['USB_typeA', 'RCJ', 'DCpower', 'miniDIN'] # The order is important because a mask file like scene_0000_00.png refers to USB_typeA and scene_0000_01.png refers to RCJ...
+    #CLASS_NAMES = ['USB_typeA', 'RCJ', 'DCpower', 'miniDIN'] # The order is important because a mask file like scene_0000_00.png refers to USB_typeA and scene_0000_01.png refers to RCJ...
+    CLASS_NAMES = ['M50', 'switch', '3Cables', 'DCpower'] # The order is important because a mask file like scene_0000_00.png refers to USB_typeA and scene_0000_01.png refers to RCJ...
     NUM_CLASSES = 1 + len(CLASS_NAMES) # background + normal classses
     CLASS_NAME_TO_ID = {class_name:str(i+1) for i, class_name in enumerate(CLASS_NAMES)}
 
@@ -31,7 +32,7 @@ class elecpartsConfig(Config):
     TRAIN_ROIS_PER_IMAGE = 32
 
     # Use a small epoch since the data is simple
-    STEPS_PER_EPOCH = 500#int(10000/(GPU_COUNT*IMAGES_PER_GPU)) # DOUBT: does this only refers to the training?
+    STEPS_PER_EPOCH = int(10000/(GPU_COUNT*IMAGES_PER_GPU)) # DOUBT: does this only refers to the training?
 
     # use small validation steps since the epoch is small
     VALIDATION_STPES = 5 # DOUBT: isn't it too small?
