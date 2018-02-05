@@ -2,8 +2,10 @@ import imageio
 
 # images
 import glob
-images_names =  glob.glob('/home/viral/Documents/Kawasaki/test/*.jpg')
-images_names += glob.glob('/home/viral/Documents/Kawasaki/test/*.png')
+#images_names =  glob.glob('/nas/datasets/elecparts/1/real/*.jpg')
+#images_names += glob.glob('/nas/datasets/elecparts/1/real/*.png')
+images_names =  glob.glob('/nas/datasets/elecparts/2/more_randomization/real/*.jpg')
+images_names += glob.glob('/nas/datasets/elecparts/2/more_randomization/real/*.png')
 
 # config
 from elecparts_config import elecpartsConfig
@@ -63,6 +65,6 @@ for path in images_names:
     r = results[0]
     visualize.display_instances(img, r['rois'], r['masks'], r['class_ids'], dataset.my_class_names, r['scores'], ax=get_ax())
     image_name = path.split('/')[-1]
-    result_image_result = 'results/'+image_name
+    result_image_result = 'results/expected_worse/'+image_name
     plt.savefig(result_image_result)
-    plt.show()
+    #plt.show()
