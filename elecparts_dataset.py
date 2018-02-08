@@ -19,7 +19,7 @@ class elecpartsDataset(utils.Dataset):
     def add_classes(self):
         """ add classes we care
         """
-        self.my_class_names = ['BG', 'none', 'none', 'none', 'none']
+        self.my_class_names = ['BG', 'none', 'none', 'none', 'none', 'none', 'none', 'none', 'none', 'none', 'none', 'none', 'none']
         for class_name, class_id in elecpartsConfig.CLASS_NAME_TO_ID.items():
             self.add_class(elecpartsConfig.NAME, class_id, class_name)
             self.my_class_names[int(class_id)] = class_name

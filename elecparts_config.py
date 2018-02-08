@@ -10,7 +10,8 @@ class elecpartsConfig(Config):
     NAME = "elecparts"
 
     #CLASS_NAMES = ['USB_typeA', 'RCJ', 'DCpower', 'miniDIN'] # The order is important because a mask file like scene_0000_00.png refers to USB_typeA and scene_0000_01.png refers to RCJ...
-    CLASS_NAMES = ['M50', 'switch', '3Cables', 'DCpower'] # The order is important because a mask file like scene_0000_00.png refers to USB_typeA and scene_0000_01.png refers to RCJ...
+    #CLASS_NAMES = ['M50', 'switch', '3Cables', 'DCpower'] # The order is important because a mask file like scene_0000_00.png refers to USB_typeA and scene_0000_01.png refers to RCJ...
+    CLASS_NAMES = ['M50', 'switch', '3Cables', 'DCpower', '8Switch', 'FS22AAP', 'ICSocket','SMA-21','Trimmer','USB_upright','LED','USB_3C' ]
     NUM_CLASSES = 1 + len(CLASS_NAMES) # background + normal classses
     CLASS_NAME_TO_ID = {class_name:str(i+1) for i, class_name in enumerate(CLASS_NAMES)}
 
