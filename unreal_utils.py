@@ -39,6 +39,9 @@ def load_weights(model, init_with):
         # Load the last model you trained and continue training
         model.load_weights(model.find_last()[1], by_name=True)
         print('loaded last trained wegihts')
+    else:
+        model.load_weights(init_with, by_name=True)
+        print('loaded the weights in ' + init_with)
 
 
 def compute_mean_AP(model, config, dataset, n_images):
