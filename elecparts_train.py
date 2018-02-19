@@ -18,6 +18,9 @@ if __name__=='__main__':
     parser.add_argument('-w',  help='weight path',              dest='model_weight_path', type=str, default='elecparts_model_weights.h5')
     parser.add_argument('-e',  help='training epochs',          dest='epochs',            type=int, default='10')
     parser.add_argument('-e2', help='fine tune epochs',         dest='epochs2',           type=int, default='2')
+    parser.add_argument('-lr1', help='learning rate for the heads', dest='lr1',           type=float, default=None)
+    parser.add_argument('-lr2', help='learning rate for the entire network', dest='lr2',           type=float, default=None)
+    
 
     args = parser.parse_args() 
     print(args)
@@ -43,14 +46,24 @@ if __name__=='__main__':
     load_weights(model, args.init_with)
 
     # train the head branches: passing layers="heads" freezes all layers except the head layers.
+    if args.lr1 == None:
+        lr1 = config.LEARNING_RATE
+    else:
+        lr1 = args.lr1
+
     model.train(dataset_train, dataset_valid, 
-        learning_rate=config.LEARNING_RATE, 
+        learning_rate=lr1, 
         epochs=args.epochs,
         layers='heads')
 
     # fine tuning
+    if args.lr2 == None:
+        lr2 = config.LEARNING_RATE/10.
+    else:
+        lr2 = args.lr2
+        
     model.train(dataset_train, dataset_valid, 
-        learning_rate=config.LEARNING_RATE/10,
+        learning_rate=lr2,
         epochs=args.epochs2,
         layers='all')
 
