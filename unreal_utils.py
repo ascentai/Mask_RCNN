@@ -68,3 +68,39 @@ def compute_mean_AP(model, config, dataset, n_images):
         APs.append(AP)
     return np.mean(APs)
 
+def compute_mean_AP_from_annotations(class_2_num, annot_detect_file, annot_gt_file): #(annot_gt_file, annot_detect_file):
+    #annot_detect_file = '/nas/datashare/datasets/elecparts/3/results/epoch_009/correct_rotation_and_our_resize/result_real.pkl'
+    #annot_gt_file = '/nas/datashare/datasets/elecparts/3/12objects_real/annotation.pkl'
+    # from elecparts_dataset import elecpartsDataset
+    # dataset = elecpartsDataset()
+    # class_2_num = dict(zip(dataset.my_class_names, np.arange(len(dataset.my_class_names))))
+    import pickle
+    APs = []
+    annot_gt = pickle.load( open(annot_gt_file,'rb'))
+    annot_detect = pickle.load( open(annot_detect_file,'rb'))
+
+    ks = annot_gt.keys()
+    for k in ks:
+        
+        # prepare the bboxes, class_ids and scores from the annotation and detect for the current image
+        gt_bboxes = []
+        gt_class_ids = []
+        bboxes = []
+        class_ids = []
+        scores = []
+        for a in annot_gt[k]['annot']:
+            bbox = a['bbox']
+            gt_bboxes.append([bbox[0][1], bbox[0][0], bbox[1][1], bbox[1][0]])
+            gt_class_ids.append(class_2_num[a['label']])
+        for a in annot_detect[k]['annot']:
+            bbox = a['bbox']
+            bboxes.append([bbox[0][1], bbox[0][0], bbox[1][1], bbox[1][0]])
+            class_ids.append(class_2_num[a['label']])
+            scores.append(a['score'])
+
+                
+        AP, precisions, recalls, overlaps = utils.compute_ap(np.array(gt_bboxes), np.array(gt_class_ids), np.array(bboxes), np.array(class_ids), np.array(scores))
+
+        APs.append(AP)
+    return np.mean(APs), APs
+
