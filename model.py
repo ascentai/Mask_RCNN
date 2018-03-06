@@ -1069,9 +1069,9 @@ def mrcnn_mask_loss_graph(target_masks, target_class_ids, pred_masks):
 
     # Only positive ROIs contribute to the loss. And only
     # the class specific mask of each ROI.
-    positive_ix = tf.where(target_class_ids > 0)[:, 0]
-    positive_class_ids = tf.cast(tf.gather(target_class_ids, positive_ix), tf.int64)
-    indices = tf.stack([positive_ix, positive_class_ids], axis=1)
+    positive_ix = tf.where(target_class_ids > 0)[:, 0] # the indixes with a class ID greater than 0. For example, if positive_ix = [0, 2, 3, 0, 0, 1] then positive_ix = [1,2,5]
+    positive_class_ids = tf.cast(tf.gather(target_class_ids, positive_ix), tf.int64) # positive_class_ids = [2,3,1]
+    indices = tf.stack([positive_ix, positive_class_ids], axis=1) #  indices = [[1,2,5],[2,3,1]]
 
     # Gather the masks (predicted and true) that contribute to loss
     y_true = tf.gather(target_masks, positive_ix)
