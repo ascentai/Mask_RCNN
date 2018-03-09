@@ -28,6 +28,11 @@ import keras.initializers as KI
 import keras.engine as KE
 import keras.models as KM
 
+from keras.layers import Input, Dense, Reshape, Flatten, Dropout, MaxPooling2D
+from keras.layers.advanced_activations import LeakyReLU
+from keras.layers.convolutional import UpSampling2D, Conv2D
+from keras.optimizers import Adam
+
 import utils
 
 # Requires TensorFlow 1.3+ and Keras 2.0.8+.
@@ -623,8 +628,10 @@ def clip_to_window(window, boxes):
     boxes[:, 3] = np.maximum(np.minimum(boxes[:, 3], window[3]), window[1])
     return boxes
 
+all_keep = []
 
 def refine_detections(rois, probs, deltas, window, config):
+    global all_keep
     """Refine classified proposals and filter overlaps and return final
     detections.
 
@@ -639,6 +646,7 @@ def refine_detections(rois, probs, deltas, window, config):
     Returns detections shaped: [N, (y1, x1, y2, x2, class_id, score)]
     """
     # Class IDs per ROI
+    #print(rois.shape)
     class_ids = np.argmax(probs, axis=1)
     # Class probability of the top class of each ROI
     class_scores = probs[np.arange(class_ids.shape[0]), class_ids]
@@ -687,13 +695,17 @@ def refine_detections(rois, probs, deltas, window, config):
     roi_count = config.DETECTION_MAX_INSTANCES
     top_ids = np.argsort(class_scores[keep])[::-1][:roi_count]
     keep = keep[top_ids]
+    print(keep)
+    print(type(rois), rois.shape)
+    all_keep.append(keep)
 
     # Arrange output as [N, (y1, x1, y2, x2, class_id, score)]
     # Coordinates are in image domain.
     result = np.hstack((refined_rois[keep],
                         class_ids[keep][..., np.newaxis], 
                         class_scores[keep][..., np.newaxis]))
-    return result
+    #all_keep.append(keep)
+    return result, keep
 
 
 class DetectionLayer(KE.Layer):
@@ -712,7 +724,7 @@ class DetectionLayer(KE.Layer):
             detections_batch = []
             for b in range(self.config.BATCH_SIZE):
                 _, _, window, _ = parse_image_meta(image_meta)
-                detections = refine_detections(
+                detections, self.keep = refine_detections(
                     rois[b], mrcnn_class[b], mrcnn_bbox[b], window[b], self.config)
                 # Pad with zeros if detections < DETECTION_MAX_INSTANCES
                 gap = self.config.DETECTION_MAX_INSTANCES - detections.shape[0]
@@ -1673,7 +1685,131 @@ class MaskRCNN():
         self.config = config
         self.model_dir = model_dir
         self.set_log_dir()
-        self.keras_model = self.build(mode=mode, config=config)
+        self.keras_model, self.keras_model_to_discriminator = self.build(mode=mode, config=config)
+
+        self.discriminator = self.build_discriminator()
+
+        # build the discriminator model
+        optimizer_D = Adam(0.0002, 0.5)
+        self.discriminator.compile(loss='binary_crossentropy', optimizer=optimizer_D, metrics=['accuracy'])
+
+        # build the comboned model
+        optimizer_useless = Adam(0.0002, 0.5)
+        #self.keras_model_to_discriminator.compile(loss='categorical_crossentropy', optimizer=optimizer_useless) # do we really need to compile it with a loss?
+        input_image = KL.Input(shape=config.IMAGE_SHAPE.tolist(), name="input_image_combined")
+        #[P2, P3, P4, P5] = self.keras_model_to_discriminator(input_image)
+        P5 = self.keras_model_to_discriminator(input_image)
+        self.discriminator.trainable = False
+        valid = self.discriminator(P5) # P5 should be of size (?, 32, 32, 256)
+        self.combined = KM.Model(input_image, valid)
+        optimizer_MD = Adam(0.0002, 0.5)
+        self.combined.compile(loss='binary_crossentropy', optimizer=optimizer_MD, metrics=['accuracy']) # TODO: properly weight this loss!!
+
+        print('Combined')
+        self.combined.summary()
+        
+        
+    def train_domain_adaptation(self, train_source_dataset, train_target_dataset, learning_rate, steps, layers="all"):
+        """Train the model.
+        train_dataset, val_dataset: Training and validation Dataset objects.
+        learning_rate: The learning rate to train with
+        epochs: Number of training epochs. Note that previous training epochs
+                are considered to be done alreay, so this actually determines
+                the epochs to train in total rather than in this particaular
+                call.
+        layers: Allows selecting wich layers to train. It can be:
+            - A regular expression to match layer names to train
+            - One of these predefined values:
+              heaads: The RPN, classifier and mask heads of the network
+              all: All the layers
+              3+: Train Resnet stage 3 and up
+              4+: Train Resnet stage 4 and up
+              5+: Train Resnet stage 5 and up
+        """
+        assert self.mode == "training", "Create model in training mode."
+
+        # Pre-defined layer regular expressions
+        layer_regex = {
+            # all layers but the backbone
+            "heads": r"(mrcnn\_.*)|(rpn\_.*)|(fpn\_.*)",
+            # From Resnet stage 4 layers and up
+            "3+": r"(res3.*)|(bn3.*)|(res4.*)|(bn4.*)|(res5.*)|(bn5.*)|(mrcnn\_.*)|(rpn\_.*)|(fpn\_.*)",
+            "4+": r"(res4.*)|(bn4.*)|(res5.*)|(bn5.*)|(mrcnn\_.*)|(rpn\_.*)|(fpn\_.*)",
+            "5+": r"(res5.*)|(bn5.*)|(mrcnn\_.*)|(rpn\_.*)|(fpn\_.*)",
+            # All layers
+            "all": ".*",
+        }
+        if layers in layer_regex.keys():
+            layers = layer_regex[layers]
+
+        # Data generators
+        train_source_generator = data_generator_source_step(train_source_dataset, self.config, shuffle=True, 
+                                                batch_size=self.config.BATCH_SIZE)
+        train_target_generator = data_generator_target_generator(train_target_dataset, self.config, shuffle=True, 
+                                                batch_size=self.config.BATCH_SIZE)
+
+        # Callbacks
+        callbacks = [
+            keras.callbacks.TensorBoard(log_dir=self.log_dir,
+                                        histogram_freq=0, write_graph=True, write_images=False),
+            keras.callbacks.ModelCheckpoint(self.checkpoint_path,
+                                            verbose=0, save_weights_only=True),
+        ]
+        
+        # Train
+        log("\nStarting domain adaptation training at epoch {}. LR={}\n".format(self.epoch, learning_rate))
+        log("Checkpoint Path: {}".format(self.checkpoint_path))
+
+        # compile the mask-rcnn network
+        self.set_trainable(layers)
+        self.compile(learning_rate, self.config.LEARNING_MOMENTUM)
+
+        for i in range(steps):
+            # ---------------------
+            #  Train Discriminator
+            # ---------------------
+
+            # Select a batch of source images and pass them through the keras_model_to_discriminator and then train discriminator
+            inputs, outputs = train_source_generator.get_input_outputs()
+            [P2, P3, P4, P5] = self.keras_model_to_discriminator.predict(inputs)
+            self.discriminator.train_on_batch(P5, np.zeros((self.config.BATCH_SIZE, 1)))
+
+            # select a batch of target images and pass them through the keras_model_to_discriminator and then train discriminator
+            
+            
+            
+            
+            
+        
+
+    def build_discriminator(self):
+        input_shape = (32, 32, 256)
+        features = KL.Input(shape=input_shape)
+        
+        model = KM.Sequential()
+
+        model.add(Conv2D(16,kernel_size=5, input_shape=input_shape,padding='same'))
+        model.add(MaxPooling2D(pool_size=(2,2)))
+        model.add(LeakyReLU(alpha=0.2))  # 16x16x16
+
+        model.add(Conv2D(8,kernel_size=5,padding='same'))
+        model.add(MaxPooling2D(pool_size=(2,2)))
+        model.add(LeakyReLU(alpha=0.2))  # 8x8x8
+
+        model.add(Conv2D(4,kernel_size=5,padding='same'))
+        model.add(MaxPooling2D(pool_size=(2,2)))
+        model.add(LeakyReLU(alpha=0.2))  # 4x4x4
+        
+        model.add(Flatten())
+        model.add(Dense(1, activation='sigmoid', name='discriminator_output'))
+        
+        validity = model(features)
+
+        print('Discriminator')
+        model.summary()
+
+        return KM.Model(features, validity)
+
 
     def build(self, mode, config):
         """Build Mask R-CNN architecture.
@@ -1848,14 +1984,16 @@ class MaskRCNN():
 
             # Detections
             # output is [batch, num_detections, (y1, x1, y2, x2, class_id, score)] in image coordinates
-            detections = DetectionLayer(config, name="mrcnn_detection")(
+            self.detections = DetectionLayer(config, name="mrcnn_detection")(
                 [rpn_rois, mrcnn_class, mrcnn_bbox, input_image_meta])
+           
+            
 
             # Convert boxes to normalized coordinates
             # TODO: let DetectionLayer return normalized coordinates to avoid
             #       unnecessary conversions
             h, w = config.IMAGE_SHAPE[:2]
-            detection_boxes = KL.Lambda(lambda x: x[...,:4]/np.array([h, w, h, w]))(detections)
+            detection_boxes = KL.Lambda(lambda x: x[...,:4]/np.array([h, w, h, w]), name="detection_boxes")(self.detections)
             
             # Create masks for detections
             mrcnn_mask = build_fpn_mask_graph(detection_boxes, mrcnn_feature_maps,
@@ -1864,7 +2002,7 @@ class MaskRCNN():
                                               config.NUM_CLASSES)
 
             model = KM.Model([input_image, input_image_meta], 
-                        [detections, mrcnn_class, mrcnn_bbox, mrcnn_mask, rpn_rois, rpn_class, rpn_bbox], 
+                        [self.detections, mrcnn_class, mrcnn_bbox, mrcnn_mask, rpn_rois, rpn_class, rpn_bbox], 
                         name='mask_rcnn')
             
         # Add multi-GPU support.
@@ -1872,7 +2010,7 @@ class MaskRCNN():
             from parallel_model import ParallelModel
             model = ParallelModel(model, config.GPU_COUNT)
         
-        return model
+        return model, KM.Model(input_image, P5)
 
     def find_last(self):
         """Finds the last checkpoint file of the last trained model in the
