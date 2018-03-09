@@ -54,7 +54,10 @@ dataset = elecpartsDataset()
 # main loop
 import numpy as np
 from skimage import transform as tf
-for path in images_names:
+annot_dict = {}
+for i,path in enumerate(images_names):
+
+    annot_dict[i] = {'filename':path, 'annot':[]}
 
     print(path)
     
@@ -63,14 +66,27 @@ for path in images_names:
     height, width, _ = img.shape
     if height > width:
        img = np.swapaxes(img, 0, 1)
-       img = tf.resize(img, [768,1024])*255
-       img = img.astype('uint8')
+       img = np.flip(img,1)
+    img = tf.resize(img, [768,1024])*255
+    img = img.astype('uint8')
     
     
     results = model.detect([img], verbose=0)
     r = results[0]
-    visualize.display_instances(img, r['rois'], r['masks'], r['class_ids'], dataset.my_class_names, r['scores'], ax=get_ax())
+
+    # save results in the annotation dictionary
+    for j in range(len(r['rois'])):
+        if r['scores'][j] >= 0.85:
+            label = dataset.my_class_names[r['class_ids'][j]]
+            y1, x1, y2, x2 = r['rois'][j]
+            annot_dict[i]['annot'].append({'label':label, 'bbox':[(x1,y1),(x2,y2)], 'score': r['scores'][j] })
+    
+    visualize.display_instances(img, r['rois'], r['masks'], r['class_ids'], dataset.my_class_names, r['scores'], ax=get_ax(), score_threshold = 0.85)
     image_name = path.split('/')[-1]
     result_image_result = args.output_folder+image_name
     plt.savefig(result_image_result)
     plt.show()
+
+# save the annotation
+import pickle
+pickle.dump(annot_dict, open('result_real.pkl', 'wb'))
