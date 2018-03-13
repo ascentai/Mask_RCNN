@@ -85,7 +85,7 @@ def compute_mean_AP_from_annotations(class_2_num, annot_detect_file, annot_gt_fi
         found = False
         kd = annot_detect.keys()
         for kdd in kd:
-            if annot_detect[kdd]['filename'] == annot_gt[k]['filename']:
+            if annot_detect[kdd]['filename'].split('/')[-1] == annot_gt[k]['filename'].split('/')[-1]:
                 found = True
                 detect_for_current_image = annot_detect[kdd]
                 break
