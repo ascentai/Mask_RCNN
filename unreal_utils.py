@@ -81,6 +81,14 @@ def compute_mean_AP_from_annotations(class_2_num, annot_detect_file, annot_gt_fi
 
     ks = annot_gt.keys()
     for k in ks:
+        # find the detection for the current image
+      	found = False
+	for detect in annot_detect:
+		if detect['filename'] == annot_gt[k]['filename']:
+			found = True
+			detect_for_current_image = detect
+			break
+	assert found
         
         # prepare the bboxes, class_ids and scores from the annotation and detect for the current image
         gt_bboxes = []
@@ -92,7 +100,7 @@ def compute_mean_AP_from_annotations(class_2_num, annot_detect_file, annot_gt_fi
             bbox = a['bbox']
             gt_bboxes.append([bbox[0][1], bbox[0][0], bbox[1][1], bbox[1][0]])
             gt_class_ids.append(class_2_num[a['label']])
-        for a in annot_detect[k]['annot']:
+        for a in detect_for_current_image:
             bbox = a['bbox']
             bboxes.append([bbox[0][1], bbox[0][0], bbox[1][1], bbox[1][0]])
             class_ids.append(class_2_num[a['label']])
@@ -102,5 +110,6 @@ def compute_mean_AP_from_annotations(class_2_num, annot_detect_file, annot_gt_fi
         AP, precisions, recalls, overlaps = utils.compute_ap(np.array(gt_bboxes), np.array(gt_class_ids), np.array(bboxes), np.array(class_ids), np.array(scores))
 
         APs.append(AP)
+	
     return np.mean(APs), APs
 
