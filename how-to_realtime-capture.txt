@@ -1,0 +1,1 @@
+$ python elecparts_realtime.py | mplayer -cache 1024 -cache-min 30 -
