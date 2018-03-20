@@ -58,7 +58,7 @@ def random_colors(N, bright=True):
     brightness = 1.0 if bright else 0.7
     hsv = [(i / N, 1, brightness) for i in range(N)]
     colors = list(map(lambda c: colorsys.hsv_to_rgb(*c), hsv))
-    #random.shuffle(colors)
+    random.shuffle(colors)
     return colors
 
 
@@ -96,7 +96,10 @@ def display_instances(image, boxes, masks, class_ids, class_names,
         _, ax = plt.subplots(1, figsize=figsize)
 
     # Generate random colors
-    colors = random_colors(N)
+    colors = [(1.0, 0.0, 0.0), (1.0, 0.5, 0.0), (1.0, 1.0, 0.0),
+            (0.5, 1.0, 0.0), (0.0, 1.0, 0.0), (0.0, 1.0, 0.5), (0.0, 1.0, 1.0),
+            (0.0, 0.5, 1.0), (0.0, 0.0, 1.0), (0.5, 0.0, 1.0), (1.0, 0.0, 1.0),
+            (1.0, 0.0, 0.5)]
 
     # Show area outside image boundaries.
     height, width = image.shape[:2]
@@ -111,7 +114,7 @@ def display_instances(image, boxes, masks, class_ids, class_names,
         if scores[i] < score_threshold:
             continue
                 
-        color = colors[i]
+        color = colors[class_ids[i] - 1]
 
         # Bounding box
         if not np.any(boxes[i]):

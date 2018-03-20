@@ -2,15 +2,15 @@
 
 import os
 import cv2
-import matplotlib.pyplot as plt
-from PIL import Image
 from subprocess import Popen, PIPE
 
-from elecparts_config import elecpartsConfig
+import matplotlib.pyplot as plt
+from PIL import Image
+import numpy as np
 
 import model as modellib
 from unreal_utils import MODEL_DIR, limit_GPU_usage, compute_mean_AP
-
+from elecparts_config import elecpartsConfig
 from elecparts_dataset import elecpartsDataset
 import visualize
 
@@ -21,7 +21,7 @@ class InferenceConfig(elecpartsConfig):
 
 config = InferenceConfig()
 model = modellib.MaskRCNN(mode="inference", model_dir=MODEL_DIR, config=config)
-model.load_weights("/nas/datashare/datasets/elecparts/3/results/epoch_009/mask_rcnn_elecparts_0009.h5", by_name=True)
+model.load_weights("/nas/datashare/datasets/elecparts/5/results/elecparts20180318T0833/mask_rcnn_elecparts_0015.h5", by_name=True)
 dataset = elecpartsDataset()
 
 cv2.namedWindow("detector")
@@ -32,33 +32,28 @@ if vc.isOpened(): # try to get the first frame
 else:
     rval = False
 
-#plt.ion()
-#fig = plt.figure()
-#sub = fig.add_subplot(1,1,1)
-p = Popen(['ffmpeg', '-f', 'image2pipe', '-vcodec', 'mjpeg', '-r', '1', '-i', '-', '-f', 'matroska', '-'], stdin=PIPE, stdout=1)
 while rval:
     #cv2.imshow("detector", frame)
     rval, frame = vc.read()
     results = model.detect([frame], verbose=0)
     r = results[0]
 
+    img = visualize.display_instances(frame, r['rois'], r['masks'], r['class_ids'], dataset.my_class_names, r['scores'], ax=plt.subplots(1,1,figsize=(8,8))[1], score_threshold = 0.85)
+
     for j in range(len(r["rois"])):
         if r["scores"][j] >= 0.85:
             label = dataset.my_class_names[r["class_ids"][j]]
+            y1, x1, y2, x2 = r["rois"][j]
 
-    #sub.clear()
-    img = visualize.display_instances(frame, r['rois'], r['masks'], r['class_ids'], dataset.my_class_names, r['scores'], ax=plt.subplots(1,1,figsize=(8,8))[1], score_threshold = 0.85)
+            cv2.rectangle(img, (x1,y1), (x2,y2), (100,100,100), 2)
+            cv2.putText(img, label, (x1,y1 - 10), cv2.FONT_HERSHEY_SIMPLEX, 1.3/3, (255,255,255), 1, cv2.LINE_AA)
 
-    pic = Image.fromarray(img)
-    pic.save(p.stdin, "JPEG")
-    print("saved a frame")
-    #os.write(1, img)
-    #plt.pause(0.05)
+    final = np.concatenate((frame,img), axis=1)
+    cv2.imshow("detector", final)
 
     key = cv2.waitKey(20)
     if key == 27: # exit on ESC
         break
 
 vc.release()
-p.stdin.close()
 cv2.destroyWindow("detector")
